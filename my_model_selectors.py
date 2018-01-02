@@ -102,8 +102,36 @@ class SelectorCV(ModelSelector):
 
     '''
 
-    def select(self):
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
+    '''
+    Number of splits is set to max 3 due to very long training time on words with many recordings.
+    If set higher it has heavy impact on training time for some words.
+    '''
+    MAX_NUMBER_OF_SPLITS = 3
 
-        # TODO implement model selection using CV
-        raise NotImplementedError
+    def select(self):
+
+        best_score = float("-inf")
+        best_model = None
+
+        for comp_count in range(self.min_n_components, self.max_n_components + 1):
+
+            num_splits = min(self.MAX_NUMBER_OF_SPLITS, len(self.sequences))
+
+            split_method = KFold(n_splits=num_splits)
+
+            for cv_train_idx, cv_test_idx in split_method.split(self.sequences):
+
+                self.X, self.lengths = combine_sequences(split_index_list=cv_train_idx, sequences=self.sequences)
+                x_test, x_test_lengths = combine_sequences(split_index_list=cv_test_idx, sequences=self.sequences)
+
+                try:
+                    model = self.base_model(comp_count)
+                    log_l = model.score(x_test, x_test_lengths)
+                except Exception as e:
+                    pass
+
+                if log_l > best_score:
+                    best_score = log_l
+                    best_model = model
+
+        return best_model
