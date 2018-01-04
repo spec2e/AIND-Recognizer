@@ -107,6 +107,7 @@ class SelectorCV(ModelSelector):
     If set higher it has heavy impact on training time for some words.
     '''
     MAX_NUMBER_OF_SPLITS = 3
+    MINIMUM_REQUIRED_SPLITS = 2
 
     def select(self):
 
@@ -117,21 +118,22 @@ class SelectorCV(ModelSelector):
 
             num_splits = min(self.MAX_NUMBER_OF_SPLITS, len(self.sequences))
 
-            split_method = KFold(n_splits=num_splits)
+            if num_splits >= self.MINIMUM_REQUIRED_SPLITS:
+                split_method = KFold(n_splits=num_splits)
 
-            for cv_train_idx, cv_test_idx in split_method.split(self.sequences):
+                for cv_train_idx, cv_test_idx in split_method.split(self.sequences):
 
-                self.X, self.lengths = combine_sequences(split_index_list=cv_train_idx, sequences=self.sequences)
-                x_test, x_test_lengths = combine_sequences(split_index_list=cv_test_idx, sequences=self.sequences)
+                    self.X, self.lengths = combine_sequences(split_index_list=cv_train_idx, sequences=self.sequences)
+                    x_test, x_test_lengths = combine_sequences(split_index_list=cv_test_idx, sequences=self.sequences)
 
-                try:
-                    model = self.base_model(comp_count)
-                    log_l = model.score(x_test, x_test_lengths)
-                except Exception as e:
-                    pass
+                    try:
+                        model = self.base_model(comp_count)
+                        log_l = model.score(x_test, x_test_lengths)
+                    except Exception as e:
+                        pass
 
-                if log_l > best_score:
-                    best_score = log_l
-                    best_model = model
+                    if log_l > best_score:
+                        best_score = log_l
+                        best_model = model
 
         return best_model
