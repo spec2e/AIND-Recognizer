@@ -76,8 +76,41 @@ class SelectorBIC(ModelSelector):
         """
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        # TODO implement model selection based on BIC scores
-        raise NotImplementedError
+        best_score = float("inf")
+        best_model = None
+
+        '''
+        Description of parameters for BIC calculation below is taken from:
+
+        http://www2.imm.dtu.dk/courses/02433/doc/ch6_slides.pdf
+
+        BIC = -2 * logL + p * logN
+        where L is the likelihood of the fitted model, p is the number of parameters,
+        and N is the number of data points.
+        '''
+        p = len(self.X[0])
+        N = np.sum(self.lengths)
+        logN = np.log(N)
+
+        for comp_count in range(self.min_n_components, self.max_n_components + 1):
+
+            try:
+                model = self.base_model(comp_count)
+                logL = model.score(self.X, self.lengths)
+
+                # calc bic score
+                bic_score = -2 * logL + p * logN
+
+                if bic_score < best_score:
+                    best_score = bic_score
+                    best_model = model
+
+            except:
+                pass
+
+        return best_model
+
+
 
 
 class SelectorDIC(ModelSelector):
@@ -113,6 +146,7 @@ class SelectorCV(ModelSelector):
 
         best_score = float("-inf")
         best_model = None
+        log_l = float("-inf")
 
         for comp_count in range(self.min_n_components, self.max_n_components + 1):
 
