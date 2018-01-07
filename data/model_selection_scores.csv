@@ -1,0 +1,16 @@
+Feature,Selection,No of corrects ,score
+ground,CV,72,0.595
+ground,BIC,80,0.55
+ground,DIC,75,0.578
+delta,CV,69,0.612
+delta,BIC,68,0.617
+delta,DIC,61,0.657
+norm,CV,60,0.662
+norm,BIC,69,0.612
+norm,DIC,67,0.623
+custom,CV,65,0.634
+custom,BIC,73,0.589
+custom,DIC,77,0.567
+polar,CV,62,0.651
+polar,BIC,82,0.539
+polar,DIC,81,0.544
