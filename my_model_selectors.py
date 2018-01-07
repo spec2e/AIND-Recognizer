@@ -87,8 +87,10 @@ class SelectorBIC(ModelSelector):
         BIC = -2 * logL + p * logN
         where L is the likelihood of the fitted model, p is the number of parameters,
         and N is the number of data points.
+
+        The number of parameters
         '''
-        p = len(self.X[0])
+        features_count = len(self.X[0])
         N = np.sum(self.lengths)
         logN = np.log(N)
 
@@ -97,6 +99,9 @@ class SelectorBIC(ModelSelector):
             try:
                 model = self.base_model(comp_count)
                 logL = model.score(self.X, self.lengths)
+
+                # calculate number of parameters
+                p = (comp_count ** 2) + 2 * features_count * comp_count - 1
 
                 # calc bic score
                 bic_score = -2 * logL + p * logN
@@ -148,8 +153,8 @@ class SelectorDIC(ModelSelector):
 
         for num_states in range(self.min_n_components, self.max_n_components + 1):
 
-            base_model = self.base_model(num_states)
             try:
+                base_model = self.base_model(num_states)
                 target_word_score = base_model.score(self.X, self.lengths)
 
                 scores = list()
@@ -161,12 +166,11 @@ class SelectorDIC(ModelSelector):
                     except:
                         pass
 
-                scores_mean = np.mean(scores)
-
-                dic_score = target_word_score - scores_mean
+                dic_score = target_word_score - np.mean(scores)
 
                 if dic_score > best_dic_score:
                     best_model = base_model
+                    best_dic_score = dic_score
 
             except:
                 pass
