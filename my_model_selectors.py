@@ -123,11 +123,55 @@ class SelectorDIC(ModelSelector):
     DIC = log(P(X(i)) - 1/(M-1)SUM(log(P(X(all but i))
     '''
 
+    '''
+    The purpose of this formula is that the:
+    "Discriminant Factor Criterion is the difference between the evidence of the
+    model, given the corresponding data set, and the average over anti-evidences of the model"
+
+    - http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.58.6208&rep=rep1&type=pdf
+      section 3.1
+
+    This helps to understand the formula, so we should score the log likelihood of the word, save that and
+    then score the other words and save that too. Then we take the mean of the scores for the words that are
+    the target word and and subtract that from the target word score.
+    The model for the target word, that has the highest score (i.e. the highest difference between the mean for
+    other words and itself) will be returned.
+    '''
+
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        # TODO implement model selection based on DIC scores
-        raise NotImplementedError
+        best_model = None
+        best_dic_score = float("-inf")
+
+        other_words = [word for word in self.words if word != self.this_word]
+
+        for num_states in range(self.min_n_components, self.max_n_components + 1):
+
+            base_model = self.base_model(num_states)
+            try:
+                target_word_score = base_model.score(self.X, self.lengths)
+
+                scores = list()
+
+                for word in other_words:
+                    word_x, word_length = self.hwords[word]
+                    try:
+                        scores.append(base_model.score(word_x, word_length))
+                    except:
+                        pass
+
+                scores_mean = np.mean(scores)
+
+                dic_score = target_word_score - scores_mean
+
+                if dic_score > best_dic_score:
+                    best_model = base_model
+
+            except:
+                pass
+
+        return best_model
 
 
 class SelectorCV(ModelSelector):
