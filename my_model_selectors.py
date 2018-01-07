@@ -87,10 +87,10 @@ class SelectorBIC(ModelSelector):
         BIC = -2 * logL + p * logN
         where L is the likelihood of the fitted model, p is the number of parameters,
         and N is the number of data points.
-
-        The number of parameters
         '''
         features_count = len(self.X[0])
+
+        # number of data points (N) is equal to the length of the sequences for this current word
         N = np.sum(self.lengths)
         logN = np.log(N)
 
@@ -203,6 +203,10 @@ class SelectorCV(ModelSelector):
             if num_splits >= self.MINIMUM_REQUIRED_SPLITS:
                 split_method = KFold(n_splits=num_splits)
 
+                cv_scores = list()
+
+                tested_model = None
+
                 for cv_train_idx, cv_test_idx in split_method.split(self.sequences):
 
                     self.X, self.lengths = combine_sequences(split_index_list=cv_train_idx, sequences=self.sequences)
@@ -210,12 +214,18 @@ class SelectorCV(ModelSelector):
 
                     try:
                         model = self.base_model(comp_count)
-                        log_l = model.score(x_test, x_test_lengths)
+                        log_l_score = model.score(x_test, x_test_lengths)
+                        cv_scores.append(log_l_score)
+                        tested_model = model
                     except Exception as e:
-                        pass
+                        print(e)
+                        break
 
-                    if log_l > best_score:
-                        best_score = log_l
-                        best_model = model
+                if len(cv_scores) > 0:
+                    log_l = np.mean(cv_scores)
+
+                if log_l > best_score and tested_model is not None:
+                    best_score = log_l
+                    best_model = tested_model
 
         return best_model
