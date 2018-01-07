@@ -218,7 +218,6 @@ class SelectorCV(ModelSelector):
                         cv_scores.append(log_l_score)
                         tested_model = model
                     except Exception as e:
-                        print(e)
                         break
 
                 if len(cv_scores) > 0:
